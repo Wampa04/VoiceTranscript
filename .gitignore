@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+*.apk
+*.aar
+*.jks
+*.keystore
+
+# Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr
+local.properties
+*.swp
+
+# NDK
+.cxx/
+cmake_build_output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+*.log
+*.class
+
+# Python (falls für Scripts)
+__pycache__/
+*.pyc
