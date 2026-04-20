@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "VoiceTranscript"
 include(":app")
+include(":whisper-jni")
