@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
@@ -34,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.voicetranscript.ui.components.FileSelector
 import com.voicetranscript.ui.components.LanguageSelector
+import com.voicetranscript.ui.screens.SettingsScreen
 import com.voicetranscript.ui.theme.VoiceTranscriptTheme
 
 class MainActivity : ComponentActivity() {
@@ -66,50 +68,66 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 fun App() {
     var selectedLanguage by remember { mutableStateOf(AudioLanguage.AUTO) }
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedModel by remember { mutableStateOf(WhisperModel.TINY) }
+    var isSettingsOpen by remember { mutableStateOf(false) }
 
-    MaterialTheme {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 30.dp),
-            horizontalArrangement = Arrangement.End
-        ) {
-            IconButton(onClick = { /* settings action */ }) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings"
+    if (isSettingsOpen) {
+        SettingsScreen(
+            selectedModel = selectedModel,
+            onModelSelected = { selectedModel = it },
+            onBackClick = { isSettingsOpen = false }
+        )
+    } else {
+        MaterialTheme {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 30.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(onClick = { isSettingsOpen = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings"
+                    )
+                }
+            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 50.dp, start = 20.dp, end = 20.dp)
+            ) {
+
+                FileSelector(
+                    selectedFileUri = selectedFileUri,
+                    onFileSelected = { selectedFileUri = it }
                 )
-            }
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 50.dp, start = 20.dp, end = 20.dp)
-        ) {
 
-            FileSelector(
-                selectedFileUri = selectedFileUri,
-                onFileSelected = { selectedFileUri = it }
-            )
-            
-            LanguageSelector(
-                selectedLanguage = selectedLanguage,
-                onLanguageSelected = { selectedLanguage = it }
-            )
+                LanguageSelector(
+                    selectedLanguage = selectedLanguage,
+                    onLanguageSelected = { selectedLanguage = it }
+                )
 
-            Button(onClick = {}) {
-                Text("transcribe")
-            }
-            OutlinedCard {
                 Text(
-                    "output text", modifier = Modifier
-                        .padding(all = 10.dp)
-                        .fillMaxWidth()
+                    text = "Aktives Modell: ${selectedModel.displayName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
+
+                Button(onClick = {}) {
+                    Text("transcribe")
+                }
+                OutlinedCard {
+                    Text(
+                        "output text", modifier = Modifier
+                            .padding(all = 10.dp)
+                            .fillMaxWidth()
+                    )
+                }
+
             }
 
         }
-
     }
 }
