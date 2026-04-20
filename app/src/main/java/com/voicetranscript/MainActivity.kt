@@ -1,6 +1,6 @@
 package com.voicetranscript
 
-import android.R.attr.top
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,22 +9,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,32 +40,32 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             VoiceTranscriptTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                App(intent)
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
 @Preview(showBackground = true)
 @Composable
-fun App() {
+fun App(intent: Intent? = null) {
     var selectedLanguage by remember { mutableStateOf(AudioLanguage.AUTO) }
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
     var selectedModel by remember { mutableStateOf(WhisperModel.TINY) }
     var isSettingsOpen by remember { mutableStateOf(false) }
+
+    // Handle Share Intent
+    LaunchedEffect(intent) {
+        if (intent?.action == Intent.ACTION_SEND) {
+            val uri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            }
+            uri?.let { selectedFileUri = it }
+        }
+    }
 
     if (isSettingsOpen) {
         SettingsScreen(
@@ -78,7 +74,7 @@ fun App() {
             onBackClick = { isSettingsOpen = false }
         )
     } else {
-        MaterialTheme {
+        VoiceTranscriptTheme {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
