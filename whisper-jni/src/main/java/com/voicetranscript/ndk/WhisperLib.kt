@@ -4,17 +4,25 @@ import android.util.Log
 
 class WhisperLib {
     /**
-     * Transkribiert eine Audio-Datei.
-     * @param modelPath Pfad zur Whisper-Model-Datei (.bin)
+     * Transkribiert eine Audio-Datei mit einem bereits initialisierten Kontext.
+     * @param contextHandle Der von init() zurückgegebene Handle
      * @param audioPath Pfad zur Audio-Datei (.wav, 16kHz mono)
+     * @param language Sprachcode (z.B. "de", "en" oder "auto")
      * @return Der transkribierte Text
      */
-    external fun transcribeFile(modelPath: String, audioPath: String): String
+    external fun transcribeFile(contextHandle: Long, audioPath: String, language: String): String
 
     /**
-     * Initialisiert das Whisper-Modul (optional, falls für Caching benötigt)
+     * Initialisiert den Whisper-Kontext und gibt einen Handle zurück.
+     * @param modelPath Pfad zur Whisper-Model-Datei (.bin)
+     * @return Der Pointer zum C++ Kontext (als Long)
      */
     external fun init(modelPath: String): Long
+
+    /**
+     * Gibt den Speicher des Kontexts wieder frei.
+     */
+    external fun freeContext(contextHandle: Long)
 
     companion object {
         private const val TAG = "WhisperLib"

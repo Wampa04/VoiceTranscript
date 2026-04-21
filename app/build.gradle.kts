@@ -68,6 +68,11 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.okhttp)
     implementation(libs.timber)
+    
+    implementation(project(":whisper-jni"))
+
+    // FFmpeg for Audio Conversion
+    implementation(libs.ffmpeg.kit.https)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
