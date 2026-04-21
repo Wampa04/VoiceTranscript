@@ -83,9 +83,12 @@ fun App(intent: Intent? = null, viewModel: MainViewModel = hiltViewModel()) {
     }
 
     if (isSettingsOpen) {
+        val downloadedModels by viewModel.downloadedModels
         SettingsScreen(
             selectedModel = selectedModel,
+            downloadedModels = downloadedModels,
             onModelSelected = { viewModel.selectModel(it) },
+            onDeleteModel = { viewModel.deleteModel(it) },
             onBackClick = { viewModel.setSettingsOpen(false) }
         )
     } else {

@@ -23,4 +23,13 @@ class WhisperModelManager @Inject constructor(
     fun isModelDownloaded(modelName: String): Boolean {
         return getModelFile(modelName).exists()
     }
+
+    fun deleteModel(modelName: String): Boolean {
+        val file = getModelFile(modelName)
+        return if (file.exists()) {
+            file.delete()
+        } else {
+            true
+        }
+    }
 }

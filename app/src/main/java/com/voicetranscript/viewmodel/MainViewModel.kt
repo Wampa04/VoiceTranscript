@@ -26,11 +26,6 @@ class MainViewModel @Inject constructor(
     private val whisperLib: WhisperLib
 ) : ViewModel() {
 
-    init {
-        // Bereinige den Audio-Cache beim Start
-        audioFileManager.clearCache()
-    }
-
     private val _selectedLanguage = mutableStateOf(AudioLanguage.AUTO)
     val selectedLanguage: State<AudioLanguage> = _selectedLanguage
 
@@ -49,11 +44,27 @@ class MainViewModel @Inject constructor(
     private val _isProcessing = mutableStateOf(false)
     val isProcessing: State<Boolean> = _isProcessing
 
+    private val _downloadedModels = mutableStateOf<Set<String>>(emptySet())
+    val downloadedModels: State<Set<String>> = _downloadedModels
+
     private val _transcriptionText = mutableStateOf("")
     val transcriptionText: State<String> = _transcriptionText
 
     private var currentContextHandle: Long = 0L
     private var lastModelPath: String? = null
+
+    init {
+        // Bereinige den Audio-Cache beim Start
+        audioFileManager.clearCache()
+        refreshDownloadedModels()
+    }
+
+    private fun refreshDownloadedModels() {
+        _downloadedModels.value = WhisperModel.entries
+            .filter { whisperModelManager.isModelDownloaded(it.modelName) }
+            .map { it.modelName }
+            .toSet()
+    }
 
     fun selectLanguage(language: AudioLanguage) {
         _selectedLanguage.value = language
@@ -84,6 +95,31 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             modelDownloader.downloadModel(modelName).collect { state ->
                 _downloadState.value = state
+                if (state is ModelDownloader.DownloadState.Success) {
+                    refreshDownloadedModels()
+                }
+            }
+        }
+    }
+
+    fun deleteModel(model: WhisperModel) {
+        viewModelScope.launch {
+            // Falls das Modell gerade geladen ist, Context freigeben
+            val modelFile = whisperModelManager.getModelFile(model.modelName)
+            if (lastModelPath == modelFile.absolutePath) {
+                if (currentContextHandle != 0L) {
+                    whisperLib.freeContext(currentContextHandle)
+                    currentContextHandle = 0L
+                    lastModelPath = null
+                }
+            }
+
+            val deleted = whisperModelManager.deleteModel(model.modelName)
+            if (deleted) {
+                refreshDownloadedModels()
+                if (_selectedModel.value == model) {
+                    _downloadState.value = null
+                }
             }
         }
     }
