@@ -12,8 +12,10 @@ import com.voicetranscript.data.audio.AudioConverter
 import com.voicetranscript.data.filesystem.AudioFileManager
 import com.voicetranscript.data.filesystem.WhisperModelManager
 import com.voicetranscript.data.remote.ModelDownloader
+import com.voicetranscript.data.repository.SettingsRepository
 import com.voicetranscript.ndk.WhisperLib
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,7 +25,8 @@ class MainViewModel @Inject constructor(
     private val whisperModelManager: WhisperModelManager,
     private val audioConverter: AudioConverter,
     private val audioFileManager: AudioFileManager,
-    private val whisperLib: WhisperLib
+    private val whisperLib: WhisperLib,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _selectedLanguage = mutableStateOf(AudioLanguage.AUTO)
@@ -57,6 +60,24 @@ class MainViewModel @Inject constructor(
         // Bereinige den Audio-Cache beim Start
         audioFileManager.clearCache()
         refreshDownloadedModels()
+        loadSettings()
+    }
+
+    private fun loadSettings() {
+        viewModelScope.launch {
+            val savedModel = settingsRepository.selectedModel.first()
+            val savedLanguage = settingsRepository.selectedLanguage.first()
+            
+            _selectedModel.value = savedModel
+            _selectedLanguage.value = savedLanguage
+            
+            // Download-Status für das geladene Modell aktualisieren
+            if (whisperModelManager.isModelDownloaded(savedModel.modelName)) {
+                _downloadState.value = ModelDownloader.DownloadState.Success(
+                    whisperModelManager.getModelFile(savedModel.modelName).absolutePath
+                )
+            }
+        }
     }
 
     private fun refreshDownloadedModels() {
@@ -68,6 +89,9 @@ class MainViewModel @Inject constructor(
 
     fun selectLanguage(language: AudioLanguage) {
         _selectedLanguage.value = language
+        viewModelScope.launch {
+            settingsRepository.saveSelectedLanguage(language)
+        }
     }
 
     fun selectFile(uri: Uri?) {
@@ -83,6 +107,9 @@ class MainViewModel @Inject constructor(
             ModelDownloader.DownloadState.Success(whisperModelManager.getModelFile(model.modelName).absolutePath)
         } else {
             null
+        }
+        viewModelScope.launch {
+            settingsRepository.saveSelectedModel(model)
         }
     }
 
