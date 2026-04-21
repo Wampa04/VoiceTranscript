@@ -1,6 +1,6 @@
 package com.voicetranscript.ndk
 
-import android.util.Log
+import timber.log.Timber
 
 class WhisperLib {
     /**
@@ -25,14 +25,12 @@ class WhisperLib {
     external fun freeContext(contextHandle: Long)
 
     companion object {
-        private const val TAG = "WhisperLib"
-
         init {
             try {
                 System.loadLibrary("whisper-jni")
-                Log.d(TAG, "Whisper JNI Library erfolgreich geladen")
+                Timber.d("Whisper JNI Library erfolgreich geladen")
             } catch (e: UnsatisfiedLinkError) {
-                Log.e(TAG, "Fehler beim Laden der Whisper JNI Library", e)
+                Timber.e(e, "Fehler beim Laden der Whisper JNI Library")
             }
         }
     }

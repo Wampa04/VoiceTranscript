@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.voicetranscript.ndk"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 28
@@ -12,29 +12,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
         
-        externalNativeBuild {
-            cmake {
-                cppFlags("")
-                abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64"))
-            }
+        externalNativeBuild.cmake {
+            cppFlags("")
+            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64"))
         }
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             isMinifyEnabled = false
-            proguardFiles(
+            setProguardFiles(listOf(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
-            )
+            ))
         }
     }
     
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-        }
+    externalNativeBuild.cmake {
+        path = file("src/main/cpp/CMakeLists.txt")
+        version = "3.22.1"
     }
 
     compileOptions {
@@ -45,6 +41,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.timber)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

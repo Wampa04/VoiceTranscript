@@ -159,7 +159,7 @@ class MainViewModel @Inject constructor(
                 intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
             } else {
                 @Suppress("DEPRECATION")
-                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                intent.getParcelableExtra(Intent.EXTRA_STREAM)
             }
             uri?.let { _selectedFileUri.value = it }
         }

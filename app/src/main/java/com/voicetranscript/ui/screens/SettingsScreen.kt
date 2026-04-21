@@ -57,7 +57,7 @@ fun SettingsScreen(
             )
             
             Column(Modifier.selectableGroup()) {
-                WhisperModel.values().forEach { model ->
+                WhisperModel.entries.forEach { model ->
                     Row(
                         Modifier
                             .fillMaxWidth()
