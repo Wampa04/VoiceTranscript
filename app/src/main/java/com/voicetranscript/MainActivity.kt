@@ -5,28 +5,44 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.voicetranscript.data.remote.ModelDownloader
 import com.voicetranscript.ui.components.FileSelector
 import com.voicetranscript.ui.components.LanguageSelector
@@ -48,6 +64,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(intent: Intent? = null, viewModel: MainViewModel = hiltViewModel()) {
     val selectedLanguage by viewModel.selectedLanguage
@@ -56,6 +73,9 @@ fun App(intent: Intent? = null, viewModel: MainViewModel = hiltViewModel()) {
     val isSettingsOpen by viewModel.isSettingsOpen
     val isProcessing by viewModel.isProcessing
     val transcriptionText by viewModel.transcriptionText
+    val downloadState by viewModel.downloadState
+
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     // Handle Share Intent
     LaunchedEffect(intent) {
@@ -69,30 +89,50 @@ fun App(intent: Intent? = null, viewModel: MainViewModel = hiltViewModel()) {
             onBackClick = { viewModel.setSettingsOpen(false) }
         )
     } else {
-        MaterialTheme {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 30.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(onClick = { viewModel.setSettingsOpen(true) }) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings"
-                    )
-                }
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                LargeTopAppBar(
+                    title = {
+                        Text(
+                            "Voice Transcript",
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.setSettingsOpen(true) }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings"
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior
+                )
             }
+        ) { innerPadding ->
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 50.dp, start = 20.dp, end = 20.dp)
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
                 FileSelector(
                     selectedFileUri = selectedFileUri,
                     onFileSelected = { viewModel.selectFile(it) }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Transkriptions-Einstellungen",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.SemiBold
                 )
 
                 LanguageSelector(
@@ -100,21 +140,35 @@ fun App(intent: Intent? = null, viewModel: MainViewModel = hiltViewModel()) {
                     onLanguageSelected = { viewModel.selectLanguage(it) }
                 )
 
-                Text(
-                    text = "Aktives Modell: ${selectedModel.displayName}",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                    Text(
+                        text = " Aktives Modell: ${selectedModel.displayName} (${selectedModel.size})",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
 
-                val downloadState by viewModel.downloadState
+                Spacer(modifier = Modifier.height(24.dp))
                 
                 when (val state = downloadState) {
                     is ModelDownloader.DownloadState.Downloading -> {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             LinearProgressIndicator(
                                 progress = { state.progress },
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
                             )
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Lade Modell herunter... ${(state.progress * 100).toInt()}%",
                                 style = MaterialTheme.typography.labelSmall
@@ -125,7 +179,8 @@ fun App(intent: Intent? = null, viewModel: MainViewModel = hiltViewModel()) {
                         Text(
                             text = "Fehler: ${state.message}",
                             color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelSmall
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Button(onClick = { viewModel.downloadSelectedModel() }) {
                             Text("Erneut versuchen")
@@ -134,50 +189,72 @@ fun App(intent: Intent? = null, viewModel: MainViewModel = hiltViewModel()) {
                     is ModelDownloader.DownloadState.Success -> {
                         Button(
                             onClick = { viewModel.transcribe() },
-                            enabled = !isProcessing && selectedFileUri != null
+                            enabled = !isProcessing && selectedFileUri != null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
                         ) {
-                            Text(if (isProcessing) "Verarbeite..." else "Transkribieren")
+                            if (isProcessing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("Verarbeite...")
+                            } else {
+                                Text("Transkribieren")
+                            }
                         }
                     }
                     null -> {
-                        Button(onClick = { viewModel.downloadSelectedModel() }) {
-                            Text("Modell herunterladen (${selectedModel.size})")
+                        Button(
+                            onClick = { viewModel.downloadSelectedModel() },
+                            modifier = Modifier.fillMaxWidth().height(56.dp)
+                        ) {
+                            Text("Modell herunterladen")
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Ergebnis",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp)
+                        .padding(bottom = 32.dp),
+                    colors = CardDefaults.outlinedCardColors(
+                        containerColor = if (transcriptionText.isEmpty()) 
+                            MaterialTheme.colorScheme.surface 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                    )
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth()
                     ) {
-                        if (isProcessing) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.padding(bottom = 8.dp),
-                                    strokeWidth = 2.dp
-                                )
-                                Text(
-                                    text = transcriptionText,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                )
-                            }
-                        } else {
-                            Text(
-                                text = transcriptionText.ifEmpty { "Wähle eine Datei und klicke auf Transkribieren" },
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                        Text(
+                            text = transcriptionText.ifEmpty { "Wähle eine Datei und klicke auf Transkribieren, um das Ergebnis hier zu sehen." },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (transcriptionText.isEmpty()) 
+                                MaterialTheme.colorScheme.outline 
+                            else 
+                                MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
-
             }
-
         }
     }
 }
