@@ -13,7 +13,8 @@ android {
         consumerProguardFiles("consumer-rules.pro")
         
         externalNativeBuild.cmake {
-            cppFlags("")
+            cppFlags("-O3", "-fexceptions", "-frtti")
+            arguments("-DCMAKE_BUILD_TYPE=Release", "-DGGML_NEON=ON")
             abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64"))
         }
     }

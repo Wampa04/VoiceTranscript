@@ -3,6 +3,8 @@
 #include <vector>
 #include <fstream>
 #include <android/log.h>
+#include <thread>
+#include <algorithm>
 #include "whisper.h"
 #include "ggml.h"
 
@@ -81,7 +83,14 @@ Java_com_voicetranscript_ndk_WhisperLib_transcribeFile(JNIEnv *env, jobject thiz
     }
 
     whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
-    wparams.n_threads = 4;
+
+    // Optimierte Thread-Anzahl für Mobile (4 ist meist ideal für Performance-Cores)
+    int num_threads = (int)std::thread::hardware_concurrency();
+    wparams.n_threads = std::min(4, std::max(1, num_threads));
+
+    LOGD("System Info: %s", whisper_print_system_info());
+    LOGD("Nutze %d Threads für Inferenz (Hardware meldet %d)", wparams.n_threads, num_threads);
+
     wparams.translate = false;
     wparams.language = lang;
     wparams.print_progress = false;
