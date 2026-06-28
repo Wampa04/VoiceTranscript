@@ -13,8 +13,9 @@ android {
         applicationId = "com.voicetranscript"
         minSdk = 28
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        // Aus dem Git-Tag (per CI) ableitbar, sonst Default fuer lokale/Debug-Builds.
+        versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
+        versionName = System.getenv("VERSION_NAME") ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -30,6 +30,15 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Derive version from tag
+      run: |
+        VERSION_NAME="${GITHUB_REF_NAME#v}"
+        IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION_NAME"
+        VERSION_CODE=$(( MAJOR * 10000 + MINOR * 100 + PATCH ))
+        echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+        echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+        echo "Building $VERSION_NAME (code $VERSION_CODE)"
+
     - name: Decode keystore
       env:
         KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
